@@ -1,6 +1,16 @@
 import { clearCredentials, setCredentials, setUser } from '@/features/auth/authSlice'
 import { addToast } from '@/features/ui/uiSlice'
-import type { Balance, CardModel, Transaction, User } from '@/shared/types'
+import type {
+  Balance,
+  CardModel,
+  Goal,
+  Investment,
+  NotificationItem,
+  SpendingInsight,
+  Transaction,
+  User,
+  Vault,
+} from '@/shared/types'
 
 import { baseApi } from './baseApi'
 import type { AuthResponse } from './baseApi'
@@ -220,6 +230,198 @@ export const api = baseApi.injectEndpoints({
         }
       },
     }),
+
+    /* ----------------------------- cards ---------------------------- */
+
+    createVirtualCard: build.mutation<CardModel, Partial<CardModel>>({
+      query: (body) => ({ url: '/cards', method: 'POST', body }),
+      invalidatesTags: ['Cards'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          dispatch(addToast({ kind: 'success', message: 'Tarjeta virtual creada' }))
+        } catch (error) {
+          dispatch(addToast({ kind: 'error', message: getErrorMessage(error, 'No se pudo crear la tarjeta') }))
+        }
+      },
+    }),
+
+    updateCard: build.mutation<CardModel, { id: string; body: Partial<CardModel> }>({
+      query: ({ id, body }) => ({ url: `/cards/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['Cards'],
+      async onQueryStarted({ id, body }, { dispatch, queryFulfilled }) {
+        // Optimistic update
+        const patchResult = dispatch(
+          api.util.updateQueryData('getCards', undefined, (draft) => {
+            const card = draft.find((c) => c.id === id)
+            if (card) Object.assign(card, body)
+          }),
+        )
+        try {
+          await queryFulfilled
+        } catch (error) {
+          patchResult.undo()
+          dispatch(addToast({ kind: 'error', message: getErrorMessage(error, 'No se pudo actualizar la tarjeta') }))
+        }
+      },
+    }),
+
+    createDisposableCard: build.mutation<CardModel, string>({
+      query: (id) => ({ url: `/cards/${id}/disposable`, method: 'POST' }),
+      invalidatesTags: ['Cards'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          dispatch(addToast({ kind: 'success', message: 'Tarjeta desechable creada' }))
+        } catch (error) {
+          dispatch(addToast({ kind: 'error', message: getErrorMessage(error, 'No se pudo crear la tarjeta desechable') }))
+        }
+      },
+    }),
+
+    /* ----------------------------- vaults --------------------------- */
+
+    getVaults: build.query<Vault[], void>({
+      query: () => '/vaults',
+      providesTags: ['Vaults'],
+    }),
+
+    createVault: build.mutation<Vault, Partial<Vault>>({
+      query: (body) => ({ url: '/vaults', method: 'POST', body }),
+      invalidatesTags: ['Vaults'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          dispatch(addToast({ kind: 'success', message: 'Bóveda creada' }))
+        } catch (error) {
+          dispatch(addToast({ kind: 'error', message: getErrorMessage(error, 'No se pudo crear la bóveda') }))
+        }
+      },
+    }),
+
+    updateVault: build.mutation<Vault, { id: string; body: Partial<Vault> }>({
+      query: ({ id, body }) => ({ url: `/vaults/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['Vaults'],
+    }),
+
+    transferToVault: build.mutation<Vault, { id: string; amount: number }>({
+      query: ({ id, amount }) => ({ url: `/vaults/${id}/transfer`, method: 'POST', body: { amount } }),
+      invalidatesTags: ['Vaults', 'Balance', 'Transactions'],
+      async onQueryStarted({ amount }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          api.util.updateQueryData('getBalance', undefined, (draft) => {
+            draft.total -= amount
+          }),
+        )
+        try {
+          await queryFulfilled
+          dispatch(addToast({ kind: 'success', message: 'Ahorro registrado' }))
+        } catch (error) {
+          patchResult.undo()
+          dispatch(addToast({ kind: 'error', message: getErrorMessage(error, 'No se pudo mover el dinero') }))
+        }
+      },
+    }),
+
+    getGoals: build.query<Goal[], void>({
+      query: () => '/goals',
+      providesTags: ['Goals'],
+    }),
+
+    createGoal: build.mutation<Goal, Partial<Goal>>({
+      query: (body) => ({ url: '/goals', method: 'POST', body }),
+      invalidatesTags: ['Goals'],
+    }),
+
+    /* -------------------------- investments ------------------------- */
+
+    getInvestments: build.query<Investment[], void>({
+      query: () => '/investments',
+      providesTags: ['Investments'],
+    }),
+
+    getInvestmentPerformance: build.query<{ date: string; value: number }[], void>({
+      query: () => '/investments/performance',
+      providesTags: ['Investments'],
+    }),
+
+    getSpendingInsight: build.query<SpendingInsight, void>({
+      query: () => '/insights/spending',
+      providesTags: ['Insights'],
+    }),
+
+    /* -------------------------- notifications ----------------------- */
+
+    getNotifications: build.query<NotificationItem[], void>({
+      query: () => '/notifications',
+      providesTags: ['Notifications'],
+    }),
+
+    markNotificationRead: build.mutation<NotificationItem, string>({
+      query: (id) => ({ url: `/notifications/${id}/read`, method: 'PATCH' }),
+      invalidatesTags: ['Notifications'],
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          api.util.updateQueryData('getNotifications', undefined, (draft) => {
+            const n = draft.find((item) => item.id === id)
+            if (n) n.read = true
+          }),
+        )
+        try {
+          await queryFulfilled
+        } catch {
+          patchResult.undo()
+        }
+      },
+    }),
+
+    markAllNotificationsRead: build.mutation<void, void>({
+      query: () => ({ url: '/notifications/read-all', method: 'POST' }),
+      invalidatesTags: ['Notifications'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          api.util.updateQueryData('getNotifications', undefined, (draft) => {
+            for (const n of draft) n.read = true
+          }),
+        )
+        try {
+          await queryFulfilled
+        } catch {
+          patchResult.undo()
+        }
+      },
+    }),
+
+    /* ----------------------------- export ---------------------------- */
+
+    exportTransactions: build.mutation<Blob, void>({
+      query: () => ({ url: '/export/transactions.csv', method: 'GET', responseHandler: (response) => response.blob() }),
+      async onQueryStarted(_, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          const url = URL.createObjectURL(data)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'nova-transactions.csv'
+          a.click()
+          URL.revokeObjectURL(url)
+        } catch {
+          // El consumidor muestra el error desde el estado de la mutación.
+        }
+      },
+    }),
+
+    contactSupport: build.mutation<{ ticketId: string }, { subject: string; message: string }>({
+      query: (body) => ({ url: '/support/contact', method: 'POST', body }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          dispatch(addToast({ kind: 'success', message: 'Mensaje enviado. Te responderemos pronto.' }))
+        } catch (error) {
+          dispatch(addToast({ kind: 'error', message: getErrorMessage(error, 'No se pudo enviar el mensaje') }))
+        }
+      },
+    }),
   }),
 })
 
@@ -236,4 +438,21 @@ export const {
   useGetTransactionsQuery,
   useGetTransactionByIdQuery,
   useCreateTransferMutation,
+  useCreateVirtualCardMutation,
+  useUpdateCardMutation,
+  useCreateDisposableCardMutation,
+  useGetVaultsQuery,
+  useCreateVaultMutation,
+  useUpdateVaultMutation,
+  useTransferToVaultMutation,
+  useGetGoalsQuery,
+  useCreateGoalMutation,
+  useGetInvestmentsQuery,
+  useGetInvestmentPerformanceQuery,
+  useGetSpendingInsightQuery,
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  useExportTransactionsMutation,
+  useContactSupportMutation,
 } = api
