@@ -20,6 +20,8 @@ function withSuspense(node: ReactNode) {
   return <Suspense fallback={<FullScreenLoader />}>{node}</Suspense>
 }
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -73,4 +75,4 @@ export const router = createBrowserRouter([
     path: '*',
     element: <NotFoundPage />,
   },
-])
+], { basename })
