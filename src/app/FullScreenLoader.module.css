@@ -1,0 +1,14 @@
+.root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  color: var(--ink-muted);
+}
+
+.label {
+  font-size: var(--text-sm);
+}
