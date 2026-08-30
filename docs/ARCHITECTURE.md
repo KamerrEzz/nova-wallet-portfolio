@@ -71,6 +71,40 @@ http.post('/api/auth/login', async ({ request }) => {
 
 MSW compara la URL de la petición contra el patrón que le pasas. Si coincide, ejecuta tu función. Si no, deja pasar la petición (en nuestro caso nunca pasa porque usamos `onUnhandledRequest: 'bypass'`).
 
+#### Endpoints disponibles
+
+| Método | Ruta | Descripción |
+| ------ | ---- | ----------- |
+| POST | `/api/auth/login` | Iniciar sesión |
+| POST | `/api/auth/register` | Crear cuenta |
+| POST | `/api/auth/refresh` | Renovar access token |
+| POST | `/api/auth/logout` | Cerrar sesión |
+| GET | `/api/me` | Datos del usuario actual |
+| PATCH | `/api/profile` | Actualizar nombre/avatar |
+| GET | `/api/balance` | Saldo total y cambio mensual |
+| GET | `/api/cards` | Lista de tarjetas |
+| POST | `/api/cards` | Crear tarjeta virtual |
+| PATCH | `/api/cards/:id` | Congelar, cambiar límites, toggles |
+| POST | `/api/cards/:id/disposable` | Crear tarjeta desechable |
+| GET | `/api/transactions` | Historial paginado con filtros |
+| GET | `/api/transactions/:id` | Detalle de movimiento |
+| GET | `/api/recipients` | Contactos para transferencias |
+| POST | `/api/transfers` | Crear transferencia |
+| GET | `/api/vaults` | Lista de bóvedas |
+| POST | `/api/vaults` | Crear bóveda |
+| PATCH | `/api/vaults/:id` | Editar bóveda |
+| POST | `/api/vaults/:id/transfer` | Añadir/sacar dinero |
+| GET | `/api/goals` | Metas de ahorro |
+| POST | `/api/goals` | Crear meta |
+| GET | `/api/investments` | Portafolio |
+| GET | `/api/investments/performance` | Rendimiento histórico |
+| GET | `/api/insights/spending` | Insights de gasto |
+| GET | `/api/notifications` | Centro de notificaciones |
+| PATCH | `/api/notifications/:id/read` | Marcar leída |
+| POST | `/api/notifications/read-all` | Marcar todas como leídas |
+| GET | `/api/export/transactions.csv` | Descargar CSV |
+| POST | `/api/support/contact` | Enviar mensaje de soporte |
+
 ### `db.ts`
 
 Usuarios, tarjetas y transacciones en memoria. Es **determinista**: la semilla del generador de datos es fija, por lo que la demo y los tests siempre dan el mismo resultado. El usuario demo siempre tiene el mismo saldo y los mismos movimientos.

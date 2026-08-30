@@ -2,7 +2,7 @@
 
 > **Proyecto de portafolio frontend (mid/senior).** Demo completa de una banca digital construida con React 18, TypeScript estricto, Redux Toolkit + RTK Query, MSW como BFF simulado y un design system propio con CSS Modules + tokens. Toda la interfaz está en español.
 >
-> Incluye landing "phygital" con animaciones, autenticación JWT con refresco silencioso, dashboard con saldo y gráfico de gasto, explorador de movimientos con búsqueda/filtros/paginación, asistente de transferencias en 4 pasos y perfil con preferencias de tema.
+> Incluye landing "phygital" con animaciones, autenticación JWT con refresco silencioso, dashboard con widgets, explorador de movimientos, asistente de transferencias, gestión de tarjetas físicas/virtuales, bóvedas de ahorro con metas, portafolio de inversiones, centro de notificaciones, ayuda/FAQ y command palette (Cmd+K).
 >
 > Desplegado en: `https://kamerrezz.github.io/nova-wallet-portfolio/`
 
@@ -45,11 +45,11 @@ Otros usuarios sembrados: `maria@nova.app / maria1234`, `diego@nova.app / diego1
 | Context API (tema)             | `src/shared/theme/ThemeContext.tsx` + `tokens.css` / `global.css` |
 | Redux Toolkit                  | `src/app/store.ts`, `src/features/auth/authSlice.ts`, `src/features/ui/uiSlice.ts` |
 | RTK Query + reauth JWT         | `src/shared/api/baseApi.ts` (`baseQueryWithReauth` con mutex de refresh), `src/shared/api/apiSlice.ts` (endpoints) |
-| BFF / API REST                 | `src/mocks/handlers.ts` (`/api/auth/*`, `/api/me`, `/api/balance`, `/api/cards`, `/api/transactions`, `/api/recipients`, `/api/transfers`, `/api/profile`) con datos deterministas en `src/mocks/db.ts` y JWT real en `src/mocks/jwt.ts` |
+| BFF / API REST                 | `src/mocks/handlers.ts` (`/api/auth/*`, `/api/me`, `/api/balance`, `/api/cards`, `/api/transactions`, `/api/recipients`, `/api/transfers`, `/api/profile`, `/api/vaults`, `/api/goals`, `/api/investments`, `/api/notifications`, `/api/insights/spending`, `/api/export/transactions.csv`, `/api/support/contact`) con datos deterministas en `src/mocks/db.ts` y JWT real en `src/mocks/jwt.ts` |
 | Operaciones asíncronas         | Login/register/refresh/transfer vía RTK Query con latencia y errores simulados en el BFF |
 | Formularios + validaciones     | `react-hook-form` + `zod`: `src/pages/LoginPage.tsx`, `RegisterPage.tsx`, `src/pages/transfers/transferSchema.ts`, `src/pages/profile/EditProfileForm.tsx` |
 | Manejo de errores en UI        | `src/app/ErrorBoundary.tsx`, `src/app/RouteError.tsx`, `src/shared/ui/ErrorState`, toasts en `src/features/ui/ToastViewport.tsx`, errores inline 422 en transferencias |
-| Componentización / design system | `src/shared/ui/`: `Avatar`, `Badge`, `Button`, `Card`, `EmptyState`, `ErrorState`, `Input`, `Modal`, `Select`, `Skeleton`, `Spinner`, `Stat`, `Textarea`, `ThemeToggle` |
+| Componentización / design system | `src/shared/ui/`: `Avatar`, `Badge`, `Button`, `Card`, `CommandPalette`, `Drawer`, `EmptyState`, `ErrorState`, `Input`, `Modal`, `Progress`, `SegmentedControl`, `Select`, `Skeleton`, `Spinner`, `Stat`, `Switch`, `Tabs`, `Textarea`, `ThemeToggle`, `Tooltip` |
 | HTML5/CSS3 responsive          | CSS Modules por componente, tokens en `src/shared/theme/tokens.css`, layouts fluidos con `clamp()`, grid/flex |
 | Optimización de renders        | `React.memo` en `WalletCard` y `TransactionRow`, `useMemo`/`useCallback` en listas y filtros (`src/pages/transactions/TransactionList.tsx`, `RecentActivity.tsx`) |
 | lazy / Suspense                | Rutas lazy en `src/app/router.tsx` con fallback `src/app/FullScreenLoader.tsx` (code splitting por página) |
@@ -71,7 +71,8 @@ src/
 │   └── ui/         # uiSlice (toasts) + ToastViewport
 ├── mocks/          # BFF simulado: handlers MSW, db determinista, JWT
 ├── pages/          # Landing, Login, Register, Dashboard, Transactions,
-│   │               # Transfers, Profile, NotFound (+ subcomponentes por página)
+│   │               # Transfers, Cards, Savings, Investments, Notifications,
+│   │               # Help, Profile, NotFound (+ subcomponentes por página)
 │   └── __tests__/  # suites de integración por página
 ├── shared/
 │   ├── api/        # baseApi (reauth) + apiSlice (endpoints RTK Query)
@@ -179,8 +180,8 @@ Aquí vive toda la comunicación con el servidor. Está dividida en dos capas.
 Usa `baseApi.injectEndpoints` para declarar los recursos:
 
 - Auth: `login`, `register`, `logout`, `refresh`.
-- Datos: `getMe`, `getBalance`, `getCards`, `getTransactions`, `getRecipients`.
-- Mutaciones: `createTransfer`, `updateProfile`.
+- Datos: `getMe`, `getBalance`, `getCards`, `getTransactions`, `getRecipients`, `getVaults`, `getGoals`, `getInvestments`, `getNotifications`, `getSpendingInsight`.
+- Mutaciones: `createTransfer`, `updateProfile`, `createVirtualCard`, `updateCard`, `createDisposableCard`, `createVault`, `updateVault`, `transferToVault`, `createGoal`, `markNotificationRead`, `markAllNotificationsRead`, `exportTransactions`, `contactSupport`.
 
 Cada endpoint genera hooks (`useGetBalanceQuery`, `useCreateTransferMutation`, etc.) que los componentes usan directamente.
 
