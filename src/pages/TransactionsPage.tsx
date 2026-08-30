@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { LayoutGroup, motion } from 'framer-motion'
 
 import { useGetTransactionsQuery } from '@/shared/api/apiSlice'
 import type { TransactionsQuery } from '@/shared/api/apiSlice'
 import { useDebounce } from '@/shared/hooks'
 import type { Transaction } from '@/shared/types'
-import { Button, EmptyState, ErrorState } from '@/shared/ui'
+import { Button, EmptyState, ErrorState, SegmentedControl } from '@/shared/ui'
 
+import { CategoryGroups } from './transactions/CategoryGroups'
+import { ExportButton } from './transactions/ExportButton'
 import { Pagination } from './transactions/Pagination'
+import { SpendingSparkline } from './transactions/SpendingSparkline'
 import { TransactionDetailModal } from './transactions/TransactionDetailModal'
 import { INITIAL_FILTERS, TransactionFilters, hasActiveFilters } from './transactions/TransactionFilters'
 import type { FiltersState } from './transactions/TransactionFilters'
@@ -16,8 +19,16 @@ import styles from './transactions/TransactionsPage.module.css'
 
 const PAGE_SIZE = 10
 
+type ViewMode = 'list' | 'category'
+
+const VIEW_OPTIONS = [
+  { value: 'list', label: 'Lista' },
+  { value: 'category', label: 'Por categoría' },
+]
+
 export default function TransactionsPage() {
   const [filters, setFilters] = useState<FiltersState>(INITIAL_FILTERS)
+  const [view, setView] = useState<ViewMode>('list')
   const [selected, setSelected] = useState<Transaction | null>(null)
   const scrollAnchorRef = useRef<HTMLDivElement>(null)
 
@@ -76,13 +87,32 @@ export default function TransactionsPage() {
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <header className={styles.header}>
-        <h1 className={styles.title}>Movimientos</h1>
-        <p className={styles.subtitle}>
-          {data ? `${data.total} movimientos` : 'Cargando movimientos…'}
-        </p>
+        <div className={styles.headerRow}>
+          <div className={styles.headerText}>
+            <h1 className={styles.title}>Movimientos</h1>
+            <p className={styles.subtitle}>
+              {data ? `${data.total} movimientos` : 'Cargando movimientos…'}
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <SpendingSparkline />
+            <ExportButton />
+          </div>
+        </div>
       </header>
 
       <TransactionFilters filters={filters} onChange={updateFilters} onClear={clearFilters} />
+
+      <div className={styles.viewToggle} role="group" aria-label="Vista de movimientos">
+        {/* LayoutGroup evita que el thumb animado salte entre los dos SegmentedControl de la página. */}
+        <LayoutGroup>
+          <SegmentedControl
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={(value) => setView(value as ViewMode)}
+          />
+        </LayoutGroup>
+      </div>
 
       <div ref={scrollAnchorRef} className={styles.scrollAnchor} />
 
@@ -105,6 +135,8 @@ export default function TransactionsPage() {
             ) : undefined
           }
         />
+      ) : view === 'category' ? (
+        <CategoryGroups transactions={data.items} onSelect={handleSelect} />
       ) : (
         <TransactionList transactions={data.items} onSelect={handleSelect} />
       )}

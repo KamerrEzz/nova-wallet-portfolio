@@ -10,13 +10,13 @@
   min-width: 200px;
 }
 
-.select {
-  flex: 0 1 170px;
-  min-width: 140px;
+.typeFilter {
+  display: flex;
+  align-items: center;
 }
 
-.date {
-  flex: 1 1 160px;
+.select {
+  flex: 0 1 170px;
   min-width: 140px;
 }
 

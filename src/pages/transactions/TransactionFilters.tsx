@@ -1,8 +1,10 @@
 import type { ChangeEvent } from 'react'
+import { LayoutGroup } from 'framer-motion'
 
-import { Button, Input, Select } from '@/shared/ui'
+import { Button, Input, SegmentedControl, Select } from '@/shared/ui'
 
 import { CATEGORY_VALUES, categoryLabel } from './categoryMeta'
+import { DateRangePicker } from './DateRangePicker'
 import styles from './TransactionFilters.module.css'
 
 export type TypeFilter = 'all' | 'income' | 'expense'
@@ -43,6 +45,12 @@ export interface TransactionFiltersProps {
   onClear: () => void
 }
 
+const TYPE_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'income', label: 'Ingresos' },
+  { value: 'expense', label: 'Gastos' },
+]
+
 function SearchIcon() {
   return (
     <svg
@@ -65,12 +73,9 @@ function SearchIcon() {
 export function TransactionFilters({ filters, onChange, onClear }: TransactionFiltersProps) {
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) =>
     onChange({ search: event.target.value })
-  const handleType = (event: ChangeEvent<HTMLSelectElement>) =>
-    onChange({ type: event.target.value as TypeFilter })
+  const handleType = (value: string) => onChange({ type: value as TypeFilter })
   const handleCategory = (event: ChangeEvent<HTMLSelectElement>) =>
     onChange({ category: event.target.value })
-  const handleFrom = (event: ChangeEvent<HTMLInputElement>) => onChange({ from: event.target.value })
-  const handleTo = (event: ChangeEvent<HTMLInputElement>) => onChange({ to: event.target.value })
 
   return (
     <div className={styles.toolbar} role="group" aria-label="Filtros de movimientos">
@@ -83,16 +88,12 @@ export function TransactionFilters({ filters, onChange, onClear }: TransactionFi
         value={filters.search}
         onChange={handleSearch}
       />
-      <Select
-        className={styles.select}
-        aria-label="Tipo de movimiento"
-        value={filters.type}
-        onChange={handleType}
-      >
-        <option value="all">Todos</option>
-        <option value="income">Ingresos</option>
-        <option value="expense">Gastos</option>
-      </Select>
+      <div className={styles.typeFilter} role="group" aria-label="Tipo de movimiento">
+        {/* LayoutGroup evita que el thumb animado salte entre los dos SegmentedControl de la página. */}
+        <LayoutGroup>
+          <SegmentedControl options={TYPE_OPTIONS} value={filters.type} onChange={handleType} />
+        </LayoutGroup>
+      </div>
       <Select
         className={styles.select}
         aria-label="Categoría"
@@ -106,22 +107,7 @@ export function TransactionFilters({ filters, onChange, onClear }: TransactionFi
           </option>
         ))}
       </Select>
-      <Input
-        className={styles.date}
-        type="date"
-        label="Desde"
-        value={filters.from}
-        max={filters.to || undefined}
-        onChange={handleFrom}
-      />
-      <Input
-        className={styles.date}
-        type="date"
-        label="Hasta"
-        value={filters.to}
-        min={filters.from || undefined}
-        onChange={handleTo}
-      />
+      <DateRangePicker from={filters.from} to={filters.to} onChange={onChange} />
       {hasActiveFilters(filters) && (
         <Button variant="ghost" size="sm" className={styles.clear} onClick={onClear}>
           Limpiar filtros
