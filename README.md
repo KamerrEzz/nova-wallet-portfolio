@@ -105,6 +105,104 @@ Componente ──dispatch──▶ RTK Query (apiSlice)
               re-render suscrito
 ```
 
+## Cómo funciona el BFF simulado con MSW
+
+MSW (Mock Service Worker) intercepta las peticiones de red antes de que salgan del navegador. En este proyecto actúa como un backend de mentira pero completamente funcional.
+
+### Archivos clave
+
+| Archivo | Qué hace | Por qué importa |
+| --- | --- | --- |
+| `public/mockServiceWorker.js` | Service Worker generado por `npx msw init public/`. Es el "espía" que captura los `fetch`. | Sin él MSW no puede interceptar nada en el navegador. Se copia tal cual a `dist/` en el build. |
+| `src/mocks/handlers.ts` | Define las rutas: `POST /api/auth/login`, `GET /api/balance`, etc. | Es como un Express/Fastify miniatura. Devuelve `HttpResponse.json()` o errores con status. |
+| `src/mocks/db.ts` | Base de datos en memoria: usuarios, tarjetas, transacciones. | Determinista (semilla fija) para que la demo y los tests siempre den lo mismo. |
+| `src/mocks/jwt.ts` | Firma y verifica tokens fake (base64url + hash). | Simula access token (15 min) y refresh token (7 días) sin necesidad de backend real. |
+| `src/mocks/browser.ts` | `setupWorker(...handlers)` para el navegador. | Arranca el worker en `main.tsx` tanto en dev como en producción para este demo. |
+| `src/mocks/server.ts` | `setupServer(...handlers)` para Node. | Se usa en Jest para testear con los mismos handlers del BFF. |
+
+### Flujo de una petición
+
+```txt
+Componente ──▶ useLoginMutation() ──▶ RTK Query
+                                          │
+                                          ▼
+                                   fetch("api/auth/login")
+                                          │
+                                          ▼
+                              MSW intercepta la petición
+                                          │
+                                          ▼
+                         handlers.ts → HttpResponse.json({ accessToken, user })
+                                          │
+                                          ▼
+                                  RTK Query resuelve la mutación
+```
+
+Si una petición no coincide con ningún handler, MSW la deja pasar (`onUnhandledRequest: 'bypass'`).
+
+### ¿Por qué MSW en lugar de un backend real?
+
+- **Demo lista para ejecutar**: clona, `npm install`, `npm run dev` y funciona.
+- **Tests reales**: los tests de Jest usan exactamente el mismo BFF que el navegador.
+- **Errores controlados**: podemos devolver 401, 422 o 500 a voluntad para probar el manejo de errores en UI.
+- **Sin dependencias externas**: no hace falta levantar Docker ni una API remota para que un recruiter revise el código.
+
+---
+
+## Cómo funciona `src/shared/api/` (RTK Query)
+
+Aquí vive toda la comunicación con el servidor. Está dividida en dos capas.
+
+### 1. `baseApi.ts` — transporte + reauth
+
+- **`baseQuery`**: instancia de `fetchBaseQuery` con:
+  - `baseUrl`: `'api'` en el navegador (relativo, funciona bajo `/repo-name/`) y `/api` en tests.
+  - `prepareHeaders`: añade `Authorization: Bearer <accessToken>` si existe en el slice de auth.
+- **`baseQueryWithReauth`**: envuelve a `baseQuery`. Si una respuesta es **401**, intenta un `POST /auth/refresh` una sola vez, actualiza el access token y reintenta la petición original.
+- **Mutex de refresh**: si dos peticiones fallan con 401 a la vez, solo se hace **una** petición de refresh; la otra espera el resultado.
+
+```txt
+200 OK ──▶ devuelve datos
+ 401     ──▶ /auth/refresh ──▶ ok? setCredentials + retry
+                    │
+                    └──▶ falla? clearCredentials → redirect /login
+```
+
+### 2. `apiSlice.ts` — endpoints de dominio
+
+Usa `baseApi.injectEndpoints` para declarar los recursos:
+
+- Auth: `login`, `register`, `logout`, `refresh`.
+- Datos: `getMe`, `getBalance`, `getCards`, `getTransactions`, `getRecipients`.
+- Mutaciones: `createTransfer`, `updateProfile`.
+
+Cada endpoint genera hooks (`useGetBalanceQuery`, `useCreateTransferMutation`, etc.) que los componentes usan directamente.
+
+### Cómo añadir un nuevo endpoint
+
+```ts
+// src/shared/api/apiSlice.ts
+endpoints: (builder) => ({
+  getExample: builder.query<Example, void>({
+    query: () => 'example',
+    providesTags: ['Example'],
+  }),
+  updateExample: builder.mutation<Example, Partial<Example>>({
+    query: (body) => ({ url: 'example', method: 'PATCH', body }),
+    invalidatesTags: ['Example'],
+  }),
+}),
+```
+
+Después en el componente:
+
+```ts
+const { data } = useGetExampleQuery()
+const [update] = useUpdateExampleMutation()
+```
+
+---
+
 ### Decisiones justificadas
 
 - **Context API para el tema, Redux para lo demás.** El tema es estado de UI puro, de baja frecuencia de cambio y sin derivados de servidor: un `ThemeContext` con `useLocalStorage` es suficiente y evita meter en el store global algo que no necesita devtools ni middleware. El estado de autenticación y los datos de servidor sí viven en Redux/RTK Query: caché, invalidación por tags y estados de petición (`isLoading`/`isError`) resueltos.
