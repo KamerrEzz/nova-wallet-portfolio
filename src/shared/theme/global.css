@@ -75,11 +75,17 @@ ol {
   min-height: 100dvh;
 }
 
-/* Focus ring */
-:focus-visible {
+/* Focus ring — keep it for links/buttons but let form controls style themselves. */
+:focus-visible:not(:where(input, textarea, select)) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
 }
 
 /* Selection */

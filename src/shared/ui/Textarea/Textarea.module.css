@@ -23,8 +23,7 @@
   outline: none;
   transition:
     border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
+    background-color var(--duration-fast) var(--ease-out);
 }
 
 .textarea::placeholder {
@@ -34,7 +33,6 @@
 .textarea:focus {
   border-color: var(--border-strong);
   background-color: color-mix(in srgb, var(--accent) 5%, var(--surface-2));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .invalid {
@@ -44,7 +42,6 @@
 .invalid:focus {
   border-color: color-mix(in srgb, var(--danger) 70%, var(--border));
   background-color: color-mix(in srgb, var(--danger) 5%, var(--surface-2));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 50%, transparent);
 }
 
 .textarea:focus-visible {
