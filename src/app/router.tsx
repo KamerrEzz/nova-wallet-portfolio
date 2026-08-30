@@ -15,6 +15,11 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const TransactionsPage = lazy(() => import('@/pages/TransactionsPage'))
 const TransfersPage = lazy(() => import('@/pages/TransfersPage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
+const CardsPage = lazy(() => import('@/pages/CardsPage'))
+const SavingsPage = lazy(() => import('@/pages/SavingsPage'))
+const InvestmentsPage = lazy(() => import('@/pages/InvestmentsPage'))
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
+const HelpPage = lazy(() => import('@/pages/HelpPage'))
 
 function withSuspense(node: ReactNode) {
   return <Suspense fallback={<FullScreenLoader />}>{node}</Suspense>
@@ -60,6 +65,31 @@ export const router = createBrowserRouter([
           {
             path: 'transfers',
             element: withSuspense(<TransfersPage />),
+            errorElement: <RouteError />,
+          },
+          {
+            path: 'cards',
+            element: withSuspense(<CardsPage />),
+            errorElement: <RouteError />,
+          },
+          {
+            path: 'savings',
+            element: withSuspense(<SavingsPage />),
+            errorElement: <RouteError />,
+          },
+          {
+            path: 'investments',
+            element: withSuspense(<InvestmentsPage />),
+            errorElement: <RouteError />,
+          },
+          {
+            path: 'notifications',
+            element: withSuspense(<NotificationsPage />),
+            errorElement: <RouteError />,
+          },
+          {
+            path: 'help',
+            element: withSuspense(<HelpPage />),
             errorElement: <RouteError />,
           },
           {
