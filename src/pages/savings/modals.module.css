@@ -1,0 +1,28 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.summary strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.formError {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
