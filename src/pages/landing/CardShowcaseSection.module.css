@@ -1,0 +1,72 @@
+.section {
+  padding: var(--space-9) 0;
+  scroll-margin-top: 80px;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+  display: grid;
+  gap: var(--space-8);
+}
+
+.eyebrow {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+
+.title {
+  margin-bottom: var(--space-4);
+  font-size: var(--text-3xl);
+  letter-spacing: -0.02em;
+}
+
+.text {
+  margin-bottom: var(--space-5);
+  color: var(--ink-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cardsCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+@media (min-width: 900px) {
+  .container {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .sticky {
+    position: sticky;
+    top: 120px;
+  }
+
+  .cardsCol {
+    display: block;
+    position: relative;
+    height: 360px;
+  }
+
+  .cardSlot {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform;
+  }
+}

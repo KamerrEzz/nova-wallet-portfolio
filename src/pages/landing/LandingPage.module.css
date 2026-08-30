@@ -1,0 +1,17 @@
+.page {
+  position: relative;
+  overflow-x: clip;
+  background: var(--bg);
+}
+
+.progressBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 80;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transform-origin: 0 50%;
+  pointer-events: none;
+}

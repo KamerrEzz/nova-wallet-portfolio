@@ -1,0 +1,149 @@
+.floatWrap {
+  position: relative;
+  z-index: 1;
+}
+
+.card {
+  --card-ink: var(--ink);
+
+  position: relative;
+  width: min(400px, 84vw);
+  aspect-ratio: 1.586;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--card-ink);
+  overflow: hidden;
+  transform-style: preserve-3d;
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.lime {
+  --card-ink: var(--on-accent);
+
+  background: linear-gradient(
+    130deg,
+    var(--accent) 0%,
+    color-mix(in srgb, var(--accent) 45%, var(--accent-2)) 55%,
+    var(--accent-2) 115%
+  );
+}
+
+.violet {
+  background: linear-gradient(
+    130deg,
+    var(--accent-2) 0%,
+    color-mix(in srgb, var(--accent-2) 55%, var(--bg)) 95%
+  );
+}
+
+.mono {
+  background: linear-gradient(130deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--border-strong);
+}
+
+.glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.contactless {
+  width: 26px;
+  height: 26px;
+  opacity: 0.85;
+}
+
+.chip {
+  width: 46px;
+  height: 34px;
+}
+
+.chipBody {
+  fill: color-mix(in srgb, var(--card-ink) 22%, transparent);
+  stroke: color-mix(in srgb, var(--card-ink) 45%, transparent);
+  stroke-width: 1;
+}
+
+.chipLines {
+  fill: none;
+  stroke: color-mix(in srgb, var(--card-ink) 45%, transparent);
+  stroke-width: 1;
+}
+
+.number {
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 4.5vw, 1.4rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.bottomRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+}
+
+.field {
+  display: grid;
+  gap: 2px;
+}
+
+.fieldLabel {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.65;
+}
+
+.fieldValue {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.brandMark {
+  position: relative;
+  width: 38px;
+  height: 24px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.brandMark::before,
+.brandMark::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+}
+
+.brandMark::before {
+  left: 0;
+  background: color-mix(in srgb, var(--card-ink) 65%, transparent);
+}
+
+.brandMark::after {
+  right: 0;
+  background: color-mix(in srgb, var(--card-ink) 35%, transparent);
+}
