@@ -5,6 +5,7 @@ import { Card, ErrorState, Skeleton } from '@/shared/ui'
 
 import { EditProfileForm } from './profile/EditProfileForm'
 import { PreferencesCard } from './profile/PreferencesCard'
+import { PrivacyCard } from './profile/PrivacyCard'
 import { ProfileCard } from './profile/ProfileCard'
 import { SecurityCard } from './profile/SecurityCard'
 import styles from './profile/ProfilePage.module.css'
@@ -66,6 +67,7 @@ export default function ProfilePage() {
 
       <PreferencesCard />
       <SecurityCard />
+      <PrivacyCard />
     </motion.div>
   )
 }

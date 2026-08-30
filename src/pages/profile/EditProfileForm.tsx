@@ -3,9 +3,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
+import { useAppDispatch } from '@/app/hooks'
+import { addToast } from '@/features/ui/uiSlice'
 import { useUpdateProfileMutation } from '@/shared/api/apiSlice'
 import type { User } from '@/shared/types'
-import { Avatar, Button, Card, Input } from '@/shared/ui'
+import { Avatar, Button, Card, Input, Modal } from '@/shared/ui'
 
 import styles from './EditProfileForm.module.css'
 
@@ -32,9 +34,12 @@ interface EditProfileFormProps {
 }
 
 export function EditProfileForm({ user }: EditProfileFormProps) {
+  const dispatch = useAppDispatch()
   const [updateProfile, { isLoading }] = useUpdateProfileMutation()
   const [serverError, setServerError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropZoom, setCropZoom] = useState(1)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const {
@@ -81,6 +86,12 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
 
   const busy = isSubmitting || isLoading
 
+  // Mock: el recorte es ilustrativo y no modifica la imagen.
+  const handleApplyCrop = () => {
+    setCropOpen(false)
+    dispatch(addToast({ kind: 'info', message: 'Recorte aplicado (demo)' }))
+  }
+
   return (
     <Card padding="lg">
       <Card.Header>
@@ -107,12 +118,22 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
                 {...register('avatarUrl')}
               />
             </div>
-            <Avatar
-              src={watchedAvatarUrl || undefined}
-              name={watchedName || user.name}
-              size="lg"
-              className={styles.preview}
-            />
+            <div className={styles.previewColumn}>
+              <Avatar
+                src={watchedAvatarUrl || undefined}
+                name={watchedName || user.name}
+                size="lg"
+                className={styles.preview}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCropOpen(true)}
+                aria-label="Recortar avatar"
+              >
+                Recortar
+              </Button>
+            </div>
           </div>
 
           {serverError && (
@@ -146,6 +167,55 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
           </div>
         </form>
       </Card.Body>
+
+      <Modal
+        open={cropOpen}
+        onClose={() => setCropOpen(false)}
+        title="Recortar avatar"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCropOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleApplyCrop}>
+              Aplicar
+            </Button>
+          </>
+        }
+      >
+        <div className={styles.cropArea}>
+          <div className={styles.cropFrame}>
+            <div
+              className={styles.cropContent}
+              style={{ transform: `scale(${cropZoom})` }}
+            >
+              <Avatar
+                src={watchedAvatarUrl || undefined}
+                name={watchedName || user.name}
+                size="lg"
+                className={styles.cropAvatar}
+              />
+            </div>
+          </div>
+        </div>
+        <label className={styles.zoomRow}>
+          <span className={styles.zoomLabel}>Zoom</span>
+          <input
+            type="range"
+            min={1}
+            max={2}
+            step={0.05}
+            value={cropZoom}
+            onChange={(event) => setCropZoom(Number(event.target.value))}
+            aria-label="Zoom del recorte"
+            className={styles.zoomSlider}
+          />
+        </label>
+        <p className={styles.cropHint}>
+          El recorte es ilustrativo en esta demo; no modifica la imagen.
+        </p>
+      </Modal>
     </Card>
   )
 }

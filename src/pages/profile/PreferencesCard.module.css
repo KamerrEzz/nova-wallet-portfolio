@@ -86,9 +86,16 @@
   font-weight: 600;
 }
 
-.currencySelect {
+.select {
   min-width: 190px;
   flex-shrink: 0;
+}
+
+.groupTitle {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .note {

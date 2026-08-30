@@ -4,13 +4,22 @@ import type { ReactNode } from 'react'
 import { useLocalStorage } from '@/shared/hooks'
 import { useTheme } from '@/shared/theme/ThemeContext'
 import type { Theme } from '@/shared/theme/ThemeContext'
-import { Card, Select } from '@/shared/ui'
+import { Card, Select, Switch } from '@/shared/ui'
+import { formatCurrency } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 
 import { Toggle } from './Toggle'
 import styles from './PreferencesCard.module.css'
 
-type Currency = 'EUR' | 'USD'
+type Currency = 'EUR' | 'USD' | 'MXN'
+type Language = 'es' | 'en'
+type DateFormat = 'dd-mm-yyyy' | 'mm-dd-yyyy' | 'iso'
+
+interface NotificationPrefs {
+  email: boolean
+  push: boolean
+  weekly: boolean
+}
 
 function MoonIcon() {
   return (
@@ -38,7 +47,14 @@ export function PreferencesCard() {
   const { theme, setTheme } = useTheme()
   const [reducedMotion, setReducedMotion] = useLocalStorage<boolean>('nova-reduced-motion', false)
   const [currency, setCurrency] = useLocalStorage<Currency>('nova-currency', 'EUR')
+  const [language, setLanguage] = useLocalStorage<Language>('nova-language', 'es')
+  const [dateFormat, setDateFormat] = useLocalStorage<DateFormat>('nova-date-format', 'dd-mm-yyyy')
+  const [notifications, setNotifications] = useLocalStorage<NotificationPrefs>(
+    'nova-notifications',
+    { email: true, push: true, weekly: false },
+  )
   const reducedMotionLabelId = useId()
+  const notificationsHeadingId = useId()
 
   // Refleja la preferencia en el documento (el CSS puede consumirla después).
   useEffect(() => {
@@ -48,6 +64,10 @@ export function PreferencesCard() {
       document.documentElement.removeAttribute('data-reduced-motion')
     }
   }, [reducedMotion])
+
+  const updateNotifications = (key: keyof NotificationPrefs) => (enabled: boolean) => {
+    setNotifications((previous) => ({ ...previous, [key]: enabled }))
+  }
 
   return (
     <Card padding="lg">
@@ -94,20 +114,97 @@ export function PreferencesCard() {
 
           <div className={styles.row}>
             <div className={styles.rowText}>
+              <span className={styles.rowLabel}>Idioma</span>
+              <span className={styles.rowHint}>Idioma de la interfaz (solo visual en esta demo).</span>
+            </div>
+            <Select
+              aria-label="Idioma"
+              className={styles.select}
+              value={language}
+              onChange={(event) => setLanguage(event.target.value as Language)}
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </Select>
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.rowText}>
               <span className={styles.rowLabel}>Moneda</span>
               <span className={styles.rowHint}>Divisa en la que se muestran los importes.</span>
             </div>
             <Select
               aria-label="Moneda"
-              className={styles.currencySelect}
+              className={styles.select}
               value={currency}
               onChange={(event) => setCurrency(event.target.value as Currency)}
             >
               <option value="EUR">EUR — Euro (€)</option>
               <option value="USD">USD — Dólar ($)</option>
+              <option value="MXN">MXN — Peso mexicano (MX$)</option>
             </Select>
           </div>
-          <p className={styles.note}>La conversión es solo visual en esta demo</p>
+          <p className={styles.note}>
+            Ejemplo: {formatCurrency(1530.75, currency)} · La conversión es solo visual en esta demo
+          </p>
+
+          <div className={styles.row}>
+            <div className={styles.rowText}>
+              <span className={styles.rowLabel}>Formato de fecha</span>
+              <span className={styles.rowHint}>Cómo se muestran las fechas en la aplicación.</span>
+            </div>
+            <Select
+              aria-label="Formato de fecha"
+              className={styles.select}
+              value={dateFormat}
+              onChange={(event) => setDateFormat(event.target.value as DateFormat)}
+            >
+              <option value="dd-mm-yyyy">DD/MM/AAAA (31/12/2026)</option>
+              <option value="mm-dd-yyyy">MM/DD/AAAA (12/31/2026)</option>
+              <option value="iso">AAAA-MM-DD (2026-12-31)</option>
+            </Select>
+          </div>
+
+          <h3 className={styles.groupTitle} id={notificationsHeadingId}>
+            Notificaciones
+          </h3>
+          <div role="group" aria-labelledby={notificationsHeadingId} className={styles.rows}>
+            <div className={styles.row}>
+            <div className={styles.rowText}>
+              <span className={styles.rowLabel}>Notificaciones por email</span>
+              <span className={styles.rowHint}>Avisos de movimientos y seguridad en tu correo.</span>
+            </div>
+            <Switch
+              checked={notifications.email}
+              onChange={updateNotifications('email')}
+              aria-label="Notificaciones por email"
+            />
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.rowText}>
+              <span className={styles.rowLabel}>Notificaciones push</span>
+              <span className={styles.rowHint}>Avisos en tiempo real en tus dispositivos.</span>
+            </div>
+            <Switch
+              checked={notifications.push}
+              onChange={updateNotifications('push')}
+              aria-label="Notificaciones push"
+            />
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.rowText}>
+              <span className={styles.rowLabel}>Resumen semanal</span>
+              <span className={styles.rowHint}>Un resumen de tu actividad cada lunes.</span>
+            </div>
+            <Switch
+              checked={notifications.weekly}
+              onChange={updateNotifications('weekly')}
+              aria-label="Resumen semanal"
+            />
+          </div>
+          </div>
         </div>
       </Card.Body>
     </Card>
