@@ -95,6 +95,24 @@ function authSuccessResponse(user: StoredUser): HttpResponse<AuthSuccessBody> {
   );
 }
 
+/**
+ * Builds a regex that matches an API path by its suffix.
+ *
+ * The app can be served under a base path (e.g. `/nova-wallet-portfolio/` on
+ * GitHub Pages), so absolute strings like `/api/auth/login` do not match.
+ * A suffix regex works both at `/api/auth/login` and at
+ * `/repo-name/api/auth/login`. Query strings are allowed.
+ */
+function apiPath(path: string): RegExp {
+  const escaped = path.replace(/\//g, '\\/').replace(/:\w+/g, '[^/]+');
+  return new RegExp(`${escaped}(?:\\?.*)?$`);
+}
+
+/** Returns the last segment of a URL pathname (used when regex matching disables MSW params). */
+function lastPathSegment(url: string): string {
+  return new URL(url).pathname.split('/').pop() ?? '';
+}
+
 /* ------------------------------------------------------------------ */
 /* Request body types                                                  */
 /* ------------------------------------------------------------------ */
@@ -129,7 +147,7 @@ export const handlers = [
   /* ------------------------------ auth ---------------------------- */
 
   http.post<PathParams, DefaultBodyType, ErrorBody | AuthSuccessBody>(
-    '/api/auth/login',
+    apiPath('/api/auth/login'),
     async ({ request }) => {
     const body = (await request.json()) as LoginBody;
     const invalid = () =>
@@ -142,7 +160,7 @@ export const handlers = [
     return authSuccessResponse(user);
   }),
 
-  http.post<PathParams, DefaultBodyType, ErrorBody | AuthSuccessBody>('/api/auth/register', async ({ request }) => {
+  http.post<PathParams, DefaultBodyType, ErrorBody | AuthSuccessBody>(apiPath('/api/auth/register'), async ({ request }) => {
     const body = (await request.json()) as RegisterBody;
 
     if (!body?.name?.trim() || !body?.email?.trim() || !body?.password) {
@@ -170,7 +188,7 @@ export const handlers = [
     return authSuccessResponse(user);
   }),
 
-  http.post<PathParams, DefaultBodyType, ErrorBody | AuthSuccessBody>('/api/auth/refresh', async ({ request }) => {
+  http.post<PathParams, DefaultBodyType, ErrorBody | AuthSuccessBody>(apiPath('/api/auth/refresh'), async ({ request }) => {
     const token = readCookie(request, REFRESH_COOKIE);
     if (!token) return unauthorized();
 
@@ -184,7 +202,7 @@ export const handlers = [
     return authSuccessResponse(user);
   }),
 
-  http.post('/api/auth/logout', async () => {
+  http.post(apiPath('/api/auth/logout'), async () => {
     return new HttpResponse(null, {
       status: 204,
       headers: { 'Set-Cookie': clearRefreshCookieHeader() },
@@ -193,28 +211,28 @@ export const handlers = [
 
   /* --------------------------- protected -------------------------- */
 
-  http.get<PathParams, DefaultBodyType, ErrorBody | User>('/api/me', async ({ request }) => {
+  http.get<PathParams, DefaultBodyType, ErrorBody | User>(apiPath('/api/me'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
     await realisticDelay();
     return HttpResponse.json<User>(toPublicUser(auth.user));
   }),
 
-  http.get('/api/balance', async ({ request }) => {
+  http.get(apiPath('/api/balance'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
     await realisticDelay();
     return HttpResponse.json(getBalanceFor(auth.user.id));
   }),
 
-  http.get<PathParams, DefaultBodyType, ErrorBody | CardModel[]>('/api/cards', async ({ request }) => {
+  http.get<PathParams, DefaultBodyType, ErrorBody | CardModel[]>(apiPath('/api/cards'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
     await realisticDelay();
     return HttpResponse.json<CardModel[]>(getCardsFor(auth.user.id));
   }),
 
-  http.get<PathParams, DefaultBodyType, ErrorBody | PaginatedResult<Transaction>>('/api/transactions', async ({ request }) => {
+  http.get<PathParams, DefaultBodyType, ErrorBody | PaginatedResult<Transaction>>(apiPath('/api/transactions'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
     await realisticDelay();
@@ -240,19 +258,19 @@ export const handlers = [
     return HttpResponse.json<PaginatedResult<Transaction>>(result);
   }),
 
-  http.get<PathParams, DefaultBodyType, ErrorBody | Transaction>('/api/transactions/:id', async ({ request, params }) => {
+  http.get<PathParams, DefaultBodyType, ErrorBody | Transaction>(apiPath('/api/transactions/:id'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
     await realisticDelay();
 
-    const tx = getTransactionById(auth.user.id, params.id as string);
+    const tx = getTransactionById(auth.user.id, lastPathSegment(request.url));
     if (!tx) {
       return HttpResponse.json<ErrorBody>({ message: 'Transacción no encontrada' }, { status: 404 });
     }
     return HttpResponse.json<Transaction>(tx);
   }),
 
-  http.get<PathParams, DefaultBodyType, ErrorBody | User[]>('/api/recipients', async ({ request }) => {
+  http.get<PathParams, DefaultBodyType, ErrorBody | User[]>(apiPath('/api/recipients'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
     await realisticDelay();
@@ -260,7 +278,7 @@ export const handlers = [
     return HttpResponse.json<User[]>(getOtherUsers(auth.user.id));
   }),
 
-  http.post<PathParams, DefaultBodyType, ErrorBody | Transaction>('/api/transfers', async ({ request }) => {
+  http.post<PathParams, DefaultBodyType, ErrorBody | Transaction>(apiPath('/api/transfers'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
 
@@ -311,7 +329,7 @@ export const handlers = [
     return HttpResponse.json<Transaction>(tx, { status: 201 });
   }),
 
-  http.patch<PathParams, DefaultBodyType, ErrorBody | User>('/api/profile', async ({ request }) => {
+  http.patch<PathParams, DefaultBodyType, ErrorBody | User>(apiPath('/api/profile'), async ({ request }) => {
     const auth = requireAuth(request);
     if (isAuthFailure(auth)) return auth;
 
@@ -339,10 +357,10 @@ export const handlers = [
  * Use e.g. `server.use(...errorHandlers)` inside a specific test.
  */
 export const errorHandlers = [
-  http.get('/api/balance', () => {
+  http.get(apiPath('/api/balance'), () => {
     return HttpResponse.json<ErrorBody>({ message: 'Error interno del servidor' }, { status: 500 });
   }),
-  http.get('/api/transactions', () => {
+  http.get(apiPath('/api/transactions'), () => {
     return HttpResponse.json<ErrorBody>({ message: 'Error interno del servidor' }, { status: 500 });
   }),
 ];
