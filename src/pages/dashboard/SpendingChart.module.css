@@ -1,5 +1,14 @@
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
 .heading {
-  margin: 0 0 var(--space-5);
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 600;
@@ -45,6 +54,33 @@
   fill: var(--ink-muted);
   font-size: 13px;
   text-transform: capitalize;
+}
+
+.line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.area {
+  fill: var(--accent);
+  opacity: 0.08;
+}
+
+.point {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+  transition: r var(--duration-fast) var(--ease-out);
+}
+
+.pointCurrent {
+  fill: var(--accent);
+  stroke: var(--accent);
+  stroke-width: 2;
+  transition: r var(--duration-fast) var(--ease-out);
 }
 
 .tooltip {

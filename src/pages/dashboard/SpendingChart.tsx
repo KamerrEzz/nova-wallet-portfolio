@@ -3,9 +3,16 @@ import { useMemo, useState } from 'react'
 import { useGetTransactionsQuery } from '@/shared/api/apiSlice'
 import { formatCurrency } from '@/shared/lib/format'
 import type { Transaction } from '@/shared/types'
-import { Card, EmptyState, ErrorState, Skeleton } from '@/shared/ui'
+import { Card, EmptyState, ErrorState, SegmentedControl, Skeleton } from '@/shared/ui'
 
 import styles from './SpendingChart.module.css'
+
+type ChartView = 'bars' | 'line'
+
+const VIEW_OPTIONS = [
+  { value: 'bars', label: 'Barras' },
+  { value: 'line', label: 'Línea' },
+]
 
 const MONTHS_BACK = 6
 const VIEW_W = 600
@@ -74,6 +81,7 @@ export function SpendingChart() {
     type: 'expense',
   })
   const [hovered, setHovered] = useState<number | null>(null)
+  const [view, setView] = useState<ChartView>('bars')
 
   const buckets = useMemo(() => aggregateByMonth(data?.items ?? []), [data])
 
@@ -81,6 +89,13 @@ export function SpendingChart() {
   const slot = (VIEW_W - PAD_X * 2) / MONTHS_BACK
   const barW = slot * 0.55
   const max = Math.max(...buckets.map((b) => b.total), 1)
+
+  const points = buckets.map((bucket, i) => ({
+    x: PAD_X + slot * i + slot / 2,
+    y: PAD_TOP + chartH - (bucket.total / max) * chartH,
+  }))
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+  const areaPath = `${linePath} L ${points[points.length - 1]?.x ?? PAD_X} ${PAD_TOP + chartH} L ${points[0]?.x ?? PAD_X} ${PAD_TOP + chartH} Z`
 
   let content
   if (isLoading) {
@@ -126,6 +141,12 @@ export function SpendingChart() {
             y2={PAD_TOP + chartH}
             className={styles.axis}
           />
+          {view === 'line' && (
+            <>
+              <path d={areaPath} className={styles.area} />
+              <path d={linePath} className={styles.line} />
+            </>
+          )}
           {buckets.map((bucket, i) => {
             const barH = (bucket.total / max) * chartH
             const x = PAD_X + slot * i + (slot - barW) / 2
@@ -145,10 +166,18 @@ export function SpendingChart() {
                   height={chartH}
                   fill="transparent"
                 />
-                {barH > 0 && (
+                {view === 'bars' && barH > 0 && (
                   <path
                     d={barPath(x, y, barW, barH)}
                     className={bucket.isCurrent ? styles.barCurrent : styles.bar}
+                  />
+                )}
+                {view === 'line' && (
+                  <circle
+                    cx={points[i].x}
+                    cy={points[i].y}
+                    r={hovered === i ? 5 : 3.5}
+                    className={bucket.isCurrent ? styles.pointCurrent : styles.point}
                   />
                 )}
                 <text
@@ -169,9 +198,17 @@ export function SpendingChart() {
 
   return (
     <Card padding="lg" aria-labelledby="spending-heading">
-      <h2 id="spending-heading" className={styles.heading}>
-        Gastos por mes
-      </h2>
+      <div className={styles.head}>
+        <h2 id="spending-heading" className={styles.heading}>
+          Gastos por mes
+        </h2>
+        <SegmentedControl
+          options={VIEW_OPTIONS}
+          value={view}
+          onChange={(value) => setView(value as ChartView)}
+          aria-label="Tipo de gráfico"
+        />
+      </div>
       {content}
     </Card>
   )
