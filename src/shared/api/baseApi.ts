@@ -14,8 +14,14 @@ export interface AuthResponse {
   user: User
 }
 
+/**
+ * Absolute `/api` in tests (Node needs a parseable URL) and relative `api` in
+ * the browser so it resolves correctly under a subpath like `/repo-name/api/*`.
+ */
+const API_BASE = process.env.NODE_ENV === 'test' ? '/api' : 'api'
+
 const baseQuery = fetchBaseQuery({
-  baseUrl: '/api',
+  baseUrl: API_BASE,
   credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as { auth: AuthState }).auth.accessToken
@@ -28,7 +34,7 @@ const baseQuery = fetchBaseQuery({
 
 /** Bare query used for the refresh call itself (no Bearer header needed). */
 const refreshQuery = fetchBaseQuery({
-  baseUrl: '/api',
+  baseUrl: API_BASE,
   credentials: 'include',
 })
 
