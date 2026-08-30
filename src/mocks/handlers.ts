@@ -1,18 +1,33 @@
 import { delay, http, HttpResponse } from 'msw';
 import type { DefaultBodyType, PathParams } from 'msw';
-import type { CardModel, Transaction, User } from '@/shared/types';
+import type { CardModel, Goal, Investment, NotificationItem, SpendingInsight, Transaction, User, Vault } from '@/shared/types';
 import {
   addTransaction,
+  createCard,
+  createGoal,
   createUser,
+  createVault,
+  exportTransactionsCsv,
   findUserByEmail,
   findUserById,
   getBalanceFor,
   getCardsFor,
+  getGoalsFor,
+  getInvestmentsFor,
+  getNotificationsFor,
   getOtherUsers,
+  getPortfolioPerformance,
+  getVaultsFor,
+  getSpendingInsight,
   getTransactionById,
   getTransactionsFor,
+  markAllNotificationsRead,
+  markNotificationRead,
   toPublicUser,
+  transferToVault,
+  updateCard,
   updateUser,
+  updateVault,
   type PaginatedResult,
   type StoredUser,
 } from './db';
@@ -349,6 +364,203 @@ export const handlers = [
     if (!updated) return unauthorized();
 
     return HttpResponse.json<User>(toPublicUser(updated));
+  }),
+
+  /* ----------------------------- cards ----------------------------- */
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | CardModel>(apiPath('/api/cards'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as Partial<CardModel>;
+    const card = createCard(auth.user.id, { ...body, type: 'virtual' });
+    await realisticDelay();
+    return HttpResponse.json<CardModel>(card, { status: 201 });
+  }),
+
+  http.patch<PathParams, DefaultBodyType, ErrorBody | CardModel>(apiPath('/api/cards/:id'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as Partial<CardModel>;
+    const updated = updateCard(auth.user.id, lastPathSegment(request.url), body);
+    if (!updated) {
+      return HttpResponse.json<ErrorBody>({ message: 'Tarjeta no encontrada' }, { status: 404 });
+    }
+    await realisticDelay();
+    return HttpResponse.json<CardModel>(updated);
+  }),
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | CardModel>(apiPath('/api/cards/:id/disposable'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const source = updateCard(auth.user.id, lastPathSegment(request.url), {});
+    if (!source) {
+      return HttpResponse.json<ErrorBody>({ message: 'Tarjeta no encontrada' }, { status: 404 });
+    }
+
+    const card = createCard(auth.user.id, {
+      ...source,
+      id: undefined,
+      label: `${source.label} (desechable)`,
+      type: 'virtual',
+    });
+    await realisticDelay();
+    return HttpResponse.json<CardModel>(card, { status: 201 });
+  }),
+
+  /* ----------------------------- vaults ---------------------------- */
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | Vault[]>(apiPath('/api/vaults'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+    return HttpResponse.json<Vault[]>(getVaultsFor(auth.user.id));
+  }),
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | Vault>(apiPath('/api/vaults'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as Partial<Vault>;
+    const vault = createVault(auth.user.id, body);
+    await realisticDelay();
+    return HttpResponse.json<Vault>(vault, { status: 201 });
+  }),
+
+  http.patch<PathParams, DefaultBodyType, ErrorBody | Vault>(apiPath('/api/vaults/:id'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as Partial<Vault>;
+    const updated = updateVault(auth.user.id, lastPathSegment(request.url), body);
+    if (!updated) {
+      return HttpResponse.json<ErrorBody>({ message: 'Bóveda no encontrada' }, { status: 404 });
+    }
+    await realisticDelay();
+    return HttpResponse.json<Vault>(updated);
+  }),
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | Vault>(apiPath('/api/vaults/:id/transfer'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as { amount?: number };
+    if (typeof body.amount !== 'number' || !Number.isFinite(body.amount)) {
+      return HttpResponse.json<ErrorBody>({ message: 'Importe inválido', fields: { amount: 'Importe inválido' } }, { status: 422 });
+    }
+
+    const updated = transferToVault(auth.user.id, lastPathSegment(request.url), body.amount);
+    if (!updated) {
+      return HttpResponse.json<ErrorBody>({ message: 'Bóveda no encontrada' }, { status: 404 });
+    }
+    await delay(600);
+    return HttpResponse.json<Vault>(updated);
+  }),
+
+  /* ------------------------------ goals ----------------------------- */
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | Goal[]>(apiPath('/api/goals'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+    return HttpResponse.json<Goal[]>(getGoalsFor(auth.user.id));
+  }),
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | Goal>(apiPath('/api/goals'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as Partial<Goal>;
+    const goal = createGoal(auth.user.id, body);
+    await realisticDelay();
+    return HttpResponse.json<Goal>(goal, { status: 201 });
+  }),
+
+  /* -------------------------- investments --------------------------- */
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | Investment[]>(apiPath('/api/investments'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+    return HttpResponse.json<Investment[]>(getInvestmentsFor(auth.user.id));
+  }),
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | { date: string; value: number }[]>(apiPath('/api/investments/performance'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+    return HttpResponse.json(getPortfolioPerformance(auth.user.id));
+  }),
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | SpendingInsight>(apiPath('/api/insights/spending'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+    return HttpResponse.json<SpendingInsight>(getSpendingInsight(auth.user.id));
+  }),
+
+  /* -------------------------- notifications ------------------------- */
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | NotificationItem[]>(apiPath('/api/notifications'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+    return HttpResponse.json<NotificationItem[]>(getNotificationsFor(auth.user.id));
+  }),
+
+  http.patch<PathParams, DefaultBodyType, ErrorBody | NotificationItem>(apiPath('/api/notifications/:id/read'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const updated = markNotificationRead(auth.user.id, lastPathSegment(request.url));
+    if (!updated) {
+      return HttpResponse.json<ErrorBody>({ message: 'Notificación no encontrada' }, { status: 404 });
+    }
+    return HttpResponse.json<NotificationItem>(updated);
+  }),
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | null>(apiPath('/api/notifications/read-all'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    markAllNotificationsRead(auth.user.id);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  /* ----------------------------- export ----------------------------- */
+
+  http.get<PathParams, DefaultBodyType, ErrorBody | string>(apiPath('/api/export/transactions.csv'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+    await realisticDelay();
+
+    const csv = exportTransactionsCsv(auth.user.id);
+    return new HttpResponse(csv, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="nova-transactions.csv"',
+      },
+    });
+  }),
+
+  /* ----------------------------- support ---------------------------- */
+
+  http.post<PathParams, DefaultBodyType, ErrorBody | { ticketId: string }>(apiPath('/api/support/contact'), async ({ request }) => {
+    const auth = requireAuth(request);
+    if (isAuthFailure(auth)) return auth;
+
+    const body = (await request.json()) as { subject?: string; message?: string };
+    if (!body.subject?.trim() || !body.message?.trim()) {
+      return HttpResponse.json<ErrorBody>(
+        { message: 'Asunto y mensaje son obligatorios' },
+        { status: 422 },
+      );
+    }
+
+    await delay(900);
+    return HttpResponse.json({ ticketId: `TICKET-${Date.now()}` }, { status: 201 });
   }),
 ];
 
