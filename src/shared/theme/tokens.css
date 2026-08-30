@@ -1,0 +1,117 @@
+/* ------------------------------------------------------------------ */
+/* NOVA Wallet — design tokens                                         */
+/* Dark theme is the default; [data-theme='light'] overrides.          */
+/* ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: dark;
+
+  /* Semantic colors — dark (default) */
+  --bg: #0b0d10;
+  --surface: #14171c;
+  --surface-2: #1a1e25;
+  --ink: #f2f4f1;
+  --ink-muted: #9aa3ad;
+  --accent: #c6f24e;
+  --accent-2: #7c6cff;
+  --success: #4ade80;
+  --danger: #f87171;
+  --border: rgba(242, 244, 241, 0.08);
+  --border-strong: rgba(242, 244, 241, 0.16);
+
+  /* Ink color used on top of accent surfaces */
+  --on-accent: #0b0d10;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Soft physical shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg:
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    0 24px 48px -12px rgba(0, 0, 0, 0.45);
+  --shadow-accent: 0 8px 32px -8px rgba(198, 242, 78, 0.35);
+
+  /* Typography */
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Fluid type scale */
+  --text-xs: clamp(0.72rem, 0.7rem + 0.1vw, 0.78rem);
+  --text-sm: clamp(0.85rem, 0.82rem + 0.15vw, 0.95rem);
+  --text-base: clamp(0.95rem, 0.92rem + 0.2vw, 1.05rem);
+  --text-lg: clamp(1.1rem, 1.05rem + 0.3vw, 1.3rem);
+  --text-xl: clamp(1.3rem, 1.2rem + 0.6vw, 1.7rem);
+  --text-2xl: clamp(1.6rem, 1.4rem + 1vw, 2.3rem);
+  --text-3xl: clamp(2rem, 1.7rem + 1.8vw, 3.2rem);
+  --text-display: clamp(2.75rem, 1.8rem + 5vw, 5.5rem);
+
+  --leading-tight: 1.1;
+  --leading-body: 1.6;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --surface-2: #f1f1ec;
+  --ink: #14171c;
+  --ink-muted: #5b6470;
+  --accent: #a8d62e;
+  --accent-2: #6a5ae0;
+  --success: #22b56b;
+  --danger: #e05252;
+  --border: rgba(20, 23, 28, 0.1);
+  --border-strong: rgba(20, 23, 28, 0.2);
+
+  --on-accent: #14171c;
+
+  --shadow-sm: 0 1px 2px rgba(20, 23, 28, 0.08);
+  --shadow-md:
+    0 2px 4px rgba(20, 23, 28, 0.06),
+    0 8px 24px rgba(20, 23, 28, 0.08);
+  --shadow-lg:
+    0 4px 8px rgba(20, 23, 28, 0.06),
+    0 24px 48px -12px rgba(20, 23, 28, 0.16);
+  --shadow-accent: 0 8px 32px -8px rgba(168, 214, 46, 0.45);
+}
+
+/* Subtle film-grain overlay. Apply to a positioned element. */
+.grain {
+  position: relative;
+}
+
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
