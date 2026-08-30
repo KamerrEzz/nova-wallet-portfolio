@@ -1,8 +1,10 @@
 # NOVA Wallet
 
-SPA de banca digital (demo) construida con **React 18 + TypeScript estricto**, **Vite 5**, **Redux Toolkit + RTK Query**, **MSW 2** como BFF simulado y un sistema de diseño propio con **CSS Modules + tokens**. Toda la interfaz está en español.
-
-Incluye landing "phygital" con animaciones, autenticación JWT con refresco silencioso, dashboard con saldo y gráfico de gasto, explorador de movimientos con búsqueda/filtros/paginación, asistente de transferencias en 4 pasos y perfil con preferencias de tema.
+> **Proyecto de portafolio frontend (mid/senior).** Demo completa de una banca digital construida con React 18, TypeScript estricto, Redux Toolkit + RTK Query, MSW como BFF simulado y un design system propio con CSS Modules + tokens. Toda la interfaz está en español.
+>
+> Incluye landing "phygital" con animaciones, autenticación JWT con refresco silencioso, dashboard con saldo y gráfico de gasto, explorador de movimientos con búsqueda/filtros/paginación, asistente de transferencias en 4 pasos y perfil con preferencias de tema.
+>
+> Desplegado en: `https://kamerrezz.github.io/nova-wallet-portfolio/`
 
 ---
 
@@ -107,6 +109,8 @@ Componente ──dispatch──▶ RTK Query (apiSlice)
 
 ## Cómo funciona el BFF simulado con MSW
 
+> Para una explicación paso a paso (ideal para aprender o para recruiters), lee [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
+
 MSW (Mock Service Worker) intercepta las peticiones de red antes de que salgan del navegador. En este proyecto actúa como un backend de mentira pero completamente funcional.
 
 ### Archivos clave
@@ -150,6 +154,8 @@ Si una petición no coincide con ningún handler, MSW la deja pasar (`onUnhandle
 ---
 
 ## Cómo funciona `src/shared/api/` (RTK Query)
+
+> Para una explicación detallada con ejemplos, lee [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 Aquí vive toda la comunicación con el servidor. Está dividida en dos capas.
 
