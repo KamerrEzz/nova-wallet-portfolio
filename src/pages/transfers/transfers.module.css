@@ -35,6 +35,25 @@
 .step {
   flex: 1;
   min-width: 0;
+  position: relative;
+}
+
+/* Connecting line from the previous dot to this step's dot. */
+.step + .step::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--space-2) + 12px);
+  left: calc(-100% + 26px);
+  width: calc(100% - 26px + var(--space-2));
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.step + .step.done::before,
+.step + .step.current::before {
+  background: var(--accent);
 }
 
 .stepLabel,
@@ -73,6 +92,14 @@
   border: 1px solid var(--border-strong);
   font-size: var(--text-xs);
   font-weight: 600;
+  overflow: hidden;
+}
+
+.dotContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .current .stepLabel {
@@ -360,4 +387,167 @@
   margin: 0;
   font-size: var(--text-sm);
   color: var(--danger);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tabs panels                                                         */
+/* ------------------------------------------------------------------ */
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ------------------------------------------------------------------ */
+/* Step 1 — favorite recipients                                        */
+/* ------------------------------------------------------------------ */
+
+.favorites {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.favoritesTitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.favoritesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.favoriteChip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.favoriteChip:hover {
+  border-color: var(--border-strong);
+}
+
+.favoriteChip.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Templates (Plantillas)                                              */
+/* ------------------------------------------------------------------ */
+
+.templateList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.templateCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.templateInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.templateName {
+  font-weight: 600;
+}
+
+.templateMeta {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* History (Historial)                                                 */
+/* ------------------------------------------------------------------ */
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.historyRow:last-child {
+  border-bottom: none;
+}
+
+.historyInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historyTitle {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyMeta {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.historyAmount {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyAmount.out {
+  color: var(--ink);
+}
+
+.historyAmount.in {
+  color: var(--success);
 }

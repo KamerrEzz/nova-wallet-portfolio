@@ -1,3 +1,5 @@
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+
 import { cn } from '@/shared/lib/cn'
 
 import styles from './transfers.module.css'
@@ -31,6 +33,8 @@ function CheckIcon() {
 
 /** Progress indicator — completed steps are clickable to go back only. */
 export function ProgressSteps({ current, onBack }: ProgressStepsProps) {
+  const reduceMotion = useReducedMotion()
+
   return (
     <ol className={styles.steps} aria-label="Progreso de la transferencia">
       {STEP_LABELS.map((label, index) => {
@@ -38,7 +42,18 @@ export function ProgressSteps({ current, onBack }: ProgressStepsProps) {
         const isCurrent = index === current
         const dot = (
           <span className={styles.dot} aria-hidden="true">
-            {done ? <CheckIcon /> : index + 1}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={done ? 'check' : index}
+                className={styles.dotContent}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reduceMotion ? 0 : -8 }}
+                transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
+              >
+                {done ? <CheckIcon /> : index + 1}
+              </motion.span>
+            </AnimatePresence>
           </span>
         )
         return (
