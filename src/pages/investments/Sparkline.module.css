@@ -1,0 +1,13 @@
+.svg {
+  display: block;
+  width: 96px;
+  height: 32px;
+}
+
+.up {
+  stroke: var(--success);
+}
+
+.down {
+  stroke: var(--danger);
+}
