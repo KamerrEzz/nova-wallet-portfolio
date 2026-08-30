@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOVA Wallet</title>
+    <script>
+      // Single-Page Application redirect for GitHub Pages.
+      // Preserves the original path in a ?redirect= query param so the app
+      // can restore the route after React Router mounts.
+      (function () {
+        const l = window.location;
+        const base = '/nova-wallet-portfolio';
+        const relative = l.pathname.slice(base.length) || '/';
+        l.replace(base + '/?redirect=' + encodeURIComponent(relative + l.search + l.hash));
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
