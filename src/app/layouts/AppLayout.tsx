@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useAppSelector } from '@/app/hooks'
@@ -5,6 +6,7 @@ import { selectCurrentUser } from '@/features/auth/authSlice'
 import ToastViewport from '@/features/ui/ToastViewport'
 import { useLogoutMutation } from '@/shared/api/apiSlice'
 import { cn } from '@/shared/lib/cn'
+import { CommandPalette } from '@/shared/ui'
 
 import styles from './AppLayout.module.css'
 
@@ -143,6 +145,7 @@ export default function AppLayout() {
   const user = useAppSelector(selectCurrentUser)
   const [logout] = useLogoutMutation()
   const navigate = useNavigate()
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -152,6 +155,68 @@ export default function AppLayout() {
     }
     navigate('/')
   }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault()
+        setPaletteOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  const commandItems = [
+    ...NAV_ITEMS.map(({ to, label, Icon }) => ({
+      id: `nav-${to}`,
+      label,
+      description: `Ir a ${label.toLowerCase()}`,
+      icon: <Icon size={16} />,
+      action: () => navigate(to),
+      keywords: ['navegar', 'ir', 'panel', 'página'],
+    })),
+    {
+      id: 'action-transfer',
+      label: 'Nueva transferencia',
+      description: 'Enviar dinero a un contacto',
+      icon: <ExchangeIcon size={16} />,
+      action: () => navigate('/app/transfers'),
+      keywords: ['enviar', 'transferir', 'dinero'],
+    },
+    {
+      id: 'action-vault',
+      label: 'Crear bóveda de ahorro',
+      description: 'Apartar dinero para una meta',
+      icon: <PiggyBankIcon size={16} />,
+      action: () => navigate('/app/savings'),
+      keywords: ['ahorrar', 'bóveda', 'meta'],
+    },
+    {
+      id: 'action-card',
+      label: 'Crear tarjeta virtual',
+      description: 'Tarjeta de un solo uso o para suscripciones',
+      icon: <CardIcon size={16} />,
+      action: () => navigate('/app/cards'),
+      keywords: ['tarjeta', 'virtual', 'desechable'],
+    },
+    {
+      id: 'action-export',
+      label: 'Exportar movimientos',
+      description: 'Descargar historial en CSV',
+      icon: <ListIcon size={16} />,
+      action: () => navigate('/app/transactions'),
+      keywords: ['exportar', 'csv', 'historial', 'descargar'],
+    },
+    {
+      id: 'action-logout',
+      label: 'Cerrar sesión',
+      description: 'Salir de tu cuenta NOVA',
+      icon: <LogoutIcon size={16} />,
+      action: () => void handleLogout(),
+      keywords: ['salir', 'logout', 'sesión'],
+    },
+  ]
 
   const initial = user?.name?.trim().charAt(0).toUpperCase() ?? 'N'
 
@@ -202,6 +267,19 @@ export default function AppLayout() {
       {/* Mobile top bar */}
       <header className={styles.topbar}>
         <Logo />
+        <button
+          type="button"
+          className={styles.searchButton}
+          onClick={() => setPaletteOpen(true)}
+          aria-label="Abrir búsqueda global (Ctrl+K)"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <span>Buscar</span>
+          <kbd>Ctrl K</kbd>
+        </button>
       </header>
 
       {/* Content */}
@@ -227,6 +305,13 @@ export default function AppLayout() {
           </NavLink>
         ))}
       </nav>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        items={commandItems}
+        placeholder="Buscar páginas o acciones…"
+      />
 
       <ToastViewport />
     </div>
