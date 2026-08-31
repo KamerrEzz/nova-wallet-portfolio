@@ -12,11 +12,12 @@ export interface SegmentedControlProps {
   value: string
   onChange: (value: string) => void
   className?: string
+  'aria-label'?: string
 }
 
-export function SegmentedControl({ options, value, onChange, className }: SegmentedControlProps) {
+export function SegmentedControl({ options, value, onChange, className, 'aria-label': ariaLabel }: SegmentedControlProps) {
   return (
-    <div role="radiogroup" className={cn(styles.root, className)}>
+    <div role="radiogroup" aria-label={ariaLabel} className={cn(styles.root, className)}>
       {options.map((option) => {
         const isActive = option.value === value
         return (
