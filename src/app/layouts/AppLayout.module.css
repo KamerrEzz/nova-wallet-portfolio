@@ -133,6 +133,11 @@
   background: var(--surface);
 }
 
+/* User card inside the mobile "Más" sheet footer. */
+.sheetUserCard {
+  width: 100%;
+}
+
 /* ------------------------------ content ---------------------------- */
 
 .main {
@@ -228,6 +233,7 @@
 
   .bottomLink {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -237,6 +243,13 @@
     color: var(--ink-muted);
     font-size: var(--text-xs);
     transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .bottomLink span {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .bottomLinkActive {

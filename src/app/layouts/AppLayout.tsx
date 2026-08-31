@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAppSelector } from '@/app/hooks'
 import { selectCurrentUser } from '@/features/auth/authSlice'
 import ToastViewport from '@/features/ui/ToastViewport'
 import { useLogoutMutation } from '@/shared/api/apiSlice'
 import { cn } from '@/shared/lib/cn'
-import { CommandPalette } from '@/shared/ui'
+import { CommandPalette, Drawer } from '@/shared/ui'
 
 import styles from './AppLayout.module.css'
 
@@ -107,6 +107,16 @@ function UserIcon({ size = 20 }: IconProps) {
   )
 }
 
+function MenuIcon({ size = 20 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="5" cy="12" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <circle cx="19" cy="12" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+
 function LogoutIcon({ size = 18 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -121,17 +131,23 @@ function LogoutIcon({ size = 18 }: IconProps) {
 /* Layout                                                              */
 /* ------------------------------------------------------------------ */
 
-const NAV_ITEMS = [
+/* Primary items fit the mobile bottom bar; the rest live in the "Más" sheet. */
+const PRIMARY_NAV_ITEMS = [
   { to: '/app', label: 'Panel', end: true, Icon: HomeIcon },
   { to: '/app/transactions', label: 'Movimientos', end: false, Icon: ListIcon },
   { to: '/app/transfers', label: 'Transferir', end: false, Icon: ExchangeIcon },
   { to: '/app/cards', label: 'Tarjetas', end: false, Icon: CardIcon },
+]
+
+const SECONDARY_NAV_ITEMS = [
   { to: '/app/savings', label: 'Ahorros', end: false, Icon: PiggyBankIcon },
   { to: '/app/investments', label: 'Inversiones', end: false, Icon: ChartIcon },
   { to: '/app/notifications', label: 'Notificaciones', end: false, Icon: BellIcon },
   { to: '/app/help', label: 'Ayuda', end: false, Icon: HelpCircleIcon },
   { to: '/app/profile', label: 'Perfil', end: false, Icon: UserIcon },
 ]
+
+const NAV_ITEMS = [...PRIMARY_NAV_ITEMS, ...SECONDARY_NAV_ITEMS]
 
 function Logo() {
   return (
@@ -145,7 +161,13 @@ export default function AppLayout() {
   const user = useAppSelector(selectCurrentUser)
   const [logout] = useLogoutMutation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+
+  const moreActive = SECONDARY_NAV_ITEMS.some(
+    (item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`),
+  )
 
   const handleLogout = async () => {
     try {
@@ -289,9 +311,9 @@ export default function AppLayout() {
         </div>
       </main>
 
-      {/* Mobile bottom navigation */}
+      {/* Mobile bottom navigation: 4 primary destinations + "Más" sheet */}
       <nav className={styles.bottomnav} aria-label="Navegación principal">
-        {NAV_ITEMS.map(({ to, label, end, Icon }) => (
+        {PRIMARY_NAV_ITEMS.map(({ to, label, end, Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -304,7 +326,64 @@ export default function AppLayout() {
             <span>{label}</span>
           </NavLink>
         ))}
+        <button
+          type="button"
+          className={cn(styles.bottomLink, moreActive && styles.bottomLinkActive)}
+          onClick={() => setMoreOpen(true)}
+          aria-expanded={moreOpen}
+          aria-label="Abrir menú con más secciones"
+        >
+          <MenuIcon />
+          <span>Más</span>
+        </button>
       </nav>
+
+      {/* Mobile "Más" sheet with the remaining sections, profile and logout */}
+      <Drawer
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title="Menú"
+        footer={
+          <div className={cn(styles.userCard, styles.sheetUserCard)}>
+            <span className={styles.avatar} aria-hidden="true">
+              {initial}
+            </span>
+            <div className={styles.userMeta}>
+              <p className={styles.userName}>{user?.name ?? 'Usuario'}</p>
+              <p className={styles.userEmail}>{user?.email ?? ''}</p>
+            </div>
+            <button
+              type="button"
+              className={styles.logoutButton}
+              onClick={() => {
+                setMoreOpen(false)
+                void handleLogout()
+              }}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <LogoutIcon />
+            </button>
+          </div>
+        }
+      >
+        <nav className={styles.nav} aria-label="Más secciones">
+          {SECONDARY_NAV_ITEMS.map(({ to, label, end, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              onClick={() => setMoreOpen(false)}
+              className={({ isActive }) =>
+                cn(styles.navLink, isActive && styles.navLinkActive)
+              }
+            >
+              <Icon />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </Drawer>
 
       <CommandPalette
         open={paletteOpen}
