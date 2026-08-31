@@ -16,12 +16,16 @@ function hashSeed(text: string): number {
   return Array.from(text).reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
 }
 
+/** Random seed generated once per page load, so the demo sparklines change on every visit. */
+const SESSION_SEED = Math.floor(Math.random() * 0xffffffff)
+
 /**
- * Builds a deterministic synthetic series that drifts from the average
- * purchase price to the current price — the API exposes no price history.
+ * Builds a synthetic series that drifts from the average purchase price to the
+ * current price — the API exposes no price history. Random per page load,
+ * stable within the session.
  */
 export function buildSparklineSeries(investment: Investment, points = 24): number[] {
-  const rand = mulberry32(hashSeed(investment.id))
+  const rand = mulberry32(hashSeed(investment.id) + SESSION_SEED)
   const { avgPrice, currentPrice } = investment
   const series: number[] = []
 
