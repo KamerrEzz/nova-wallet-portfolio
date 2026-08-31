@@ -675,14 +675,17 @@ export function getInvestmentsFor(userId: string): Investment[] {
 export function getPortfolioPerformance(userId: string): { date: string; value: number }[] {
   const now = new Date();
   const result: { date: string; value: number }[] = [];
-  // Derive the PRNG seed from the user id so each user gets a different but stable curve.
-  const seed = Array.from(userId).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-  const rand = mulberry32(20250115 + seed);
+  // Fresh random seed on every request (salted with the user id) so each fetch
+  // returns a different random-walk curve — the demo charts change on every load.
+  const userSeed = Array.from(userId).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const rand = mulberry32((userSeed ^ Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
   const baseValue = 4200;
+  // Per-curve bias so some loads trend up and others down.
+  const bias = (rand() - 0.48) * 0.006;
 
   for (let i = 89; i >= 0; i -= 1) {
     const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const drift = 1 + (rand() - 0.45) * 0.012;
+    const drift = 1 + bias + (rand() - 0.5) * 0.014;
     const prev = result[result.length - 1]?.value ?? baseValue;
     result.push({
       date: date.toISOString().split('T')[0],
